@@ -22,6 +22,22 @@ router.get('/', async (req, res) => {
   }
 })
 
+/**
+* 本番用のルート
+*/
+router.post('/', line.middleware(config), async (req, res) => {
+    console.log("here!")
+    Promise.all(req.body.events.map(handlerEvent))
+      .then((result) => {
+        console.log(result)
+        res.status(200).end()
+      })
+      .catch((err) => {
+        console.error(err)
+        res.status(500).end()
+      })
+  })
+
   async function quickstart() {
     const vision = require('@google-cloud/vision');
     const client = new vision.ImageAnnotatorClient();
@@ -32,4 +48,37 @@ router.get('/', async (req, res) => {
 
     return fullTextAnnotation.text;
   }
+
+const handlerEvent = async (event) => {
+    // Webhookの検証
+    if (event.replyToken && event.replyToken.match(/^(.)\1*$/)) {
+        return 'Webhookの検証'
+    }
+
+    const replyToken = event.replyToken
+    const message = event.message
+    let text
+
+    if (message.type == 'text') {
+        // 処理を書く
+        text = message.text
+        await replyText(replyToken, text)
+        return 'オウム返し成功'
+      }
+}
+
+/**
+* テキストを返信する関数
+
+* @param {String} token
+* @param {String[] | String} texts
+*/
+const replyText = (token, texts) => {
+  texts = Array.isArray(texts) ? texts : [texts]
+  return client.replyMessage(
+    token,
+    texts.map((text) => ({ type: 'text', text }))
+  )
+}
+
 module.exports = router ;
