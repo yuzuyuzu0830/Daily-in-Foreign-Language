@@ -2,6 +2,8 @@
 
 const line = require('@line/bot-sdk')
 const express = require('express')
+const func = require('../lib/index')
+const gcloudApi = require('../lib/gcloud-api')
 
 const router = express.Router()
 const config = {
@@ -59,12 +61,11 @@ const handlerEvent = async (event) => {
     const message = event.message
     let text
 
-    if (message.type == 'text') {
-        // 処理を書く
-        text = message.text
-        await replyText(replyToken, text)
-        return 'オウム返し成功'
-      }
+    if (message.type == 'image') {
+      text = await imageToText(message.id)
+      await replyText(replyToken, text)
+      return '画像を文字起こししました'
+    }
 }
 
 /**
@@ -79,6 +80,17 @@ const replyText = (token, texts) => {
     token,
     texts.map((text) => ({ type: 'text', text }))
   )
+}
+
+/**
+* 画像をテキストに変換する関数
+* @param {Number} messageId
+*/
+const imageToText = async (messageId) => {
+  const buffer = await func.getContentBuffer(messageId)
+  const text = await gcloudApi.cloudVisionText(buffer)
+  const texts = await func.getTextArray(text)
+  return texts
 }
 
 module.exports = router ;
