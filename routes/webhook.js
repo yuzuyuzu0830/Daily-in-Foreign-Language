@@ -4,6 +4,7 @@ const line = require('@line/bot-sdk')
 const express = require('express')
 const func = require('../lib/index')
 const gcloudApi = require('../lib/gcloud-api')
+const grammarlyApi = require('../lib/grammarly-api');
 const router = express.Router()
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
@@ -95,12 +96,10 @@ const imageToText = async (messageId) => {
 /**
 * Grammarly APIを使用して送信したテキストを添削してもらう
 *
-* @param {String} text
+* @param {object} text
 */
 const correctTextWithGrammarly = async (text) => {
-  const { correct, Grammarly } = require('@stewartmcgown/grammarly-api')
-  const { corrected } = await new Grammarly().analyse(String(text)).then(correct);
-  return corrected
+  return await grammarlyApi.correctText(String(text))
 }
 
 module.exports = router ;
