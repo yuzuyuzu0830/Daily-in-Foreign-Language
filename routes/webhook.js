@@ -4,7 +4,6 @@ const line = require('@line/bot-sdk')
 const express = require('express')
 const func = require('../lib/index')
 const gcloudApi = require('../lib/gcloud-api')
-
 const router = express.Router()
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
@@ -28,7 +27,6 @@ router.get('/', async (req, res) => {
 * 本番用のルート
 */
 router.post('/', line.middleware(config), async (req, res) => {
-    console.log("here!")
     Promise.all(req.body.events.map(handlerEvent))
       .then((result) => {
         console.log(result)
@@ -45,8 +43,6 @@ router.post('/', line.middleware(config), async (req, res) => {
     const client = new vision.ImageAnnotatorClient();
     const [result] = await client.documentTextDetection('./public/apple.png');
     const fullTextAnnotation = result.fullTextAnnotation;
-    console.log('Text:');
-    console.log(fullTextAnnotation.text);
 
     return fullTextAnnotation.text;
   }
@@ -63,14 +59,16 @@ const handlerEvent = async (event) => {
 
     if (message.type == 'image') {
       text = await imageToText(message.id)
-      await replyText(replyToken, text)
+      let correctedText = await correctTextWithGrammarly(text)
+      await replyText(replyToken, correctedText)
+
       return '画像を文字起こししました'
     }
 }
 
 /**
 * テキストを返信する関数
-
+*
 * @param {String} token
 * @param {String[] | String} texts
 */
@@ -84,6 +82,7 @@ const replyText = (token, texts) => {
 
 /**
 * 画像をテキストに変換する関数
+*
 * @param {Number} messageId
 */
 const imageToText = async (messageId) => {
@@ -91,6 +90,17 @@ const imageToText = async (messageId) => {
   const text = await gcloudApi.cloudVisionText(buffer)
   const texts = await func.getTextArray(text)
   return texts
+}
+
+/**
+* Grammarly APIを使用して送信したテキストを添削してもらう
+*
+* @param {String} text
+*/
+const correctTextWithGrammarly = async (text) => {
+  const { correct, Grammarly } = require('@stewartmcgown/grammarly-api')
+  const { corrected } = await new Grammarly().analyse(String(text)).then(correct);
+  return corrected
 }
 
 module.exports = router ;
