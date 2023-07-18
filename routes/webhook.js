@@ -4,13 +4,15 @@ const line = require('@line/bot-sdk')
 const express = require('express')
 const func = require('../lib/index')
 const gcloudApi = require('../lib/gcloud-api')
-const grammarlyApi = require('../lib/grammarly-api');
+const grammarlyApi = require('../lib/grammarly-api')
 const router = express.Router()
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
     channelSecret: process.env.CHANNEL_SECRET
 };
 const client = new line.Client(config)
+const { Client } = require("@notionhq/client");
+const notion = new Client({ auth: process.env.NOTION_TOKEN })
 
 /**
 * 動作確認用のルート
@@ -63,7 +65,28 @@ const handlerEvent = async (event) => {
       let correctedText = await correctTextWithGrammarly(text)
       await replyText(replyToken, correctedText)
 
-      return '画像を文字起こししました'
+      return await notion.pages.create({
+        parent: { database_id: process.env.DATABASE_ID },
+        properties: {
+          title: {
+            title: [{
+              text: {content: new Date().toISOString().split('T')[0]},
+            }],
+          },
+        },
+        children: [
+          {
+            object: "block",
+            type: "paragraph",
+            paragraph: {
+              rich_text: [{
+                type: "text",
+                text: {content: correctedText},
+              }],
+            },
+          },
+        ],
+      });
     }
 }
 

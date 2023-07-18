@@ -3,7 +3,6 @@
 require('dotenv').config();
 
 const express = require('express');
-
 const app = express();
 const routes = {
     webhookRouter: require('./routes/webhook.js')
