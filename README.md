@@ -10,6 +10,7 @@ Write your journal entry and take a picture of it.
 Send this image via LINE.
 The application processes the image and sends the corrected text back to LINE.
 The corrected text is simultaneously saved in Notion.
+(LINE is a popular communication app in Japan)
 
 ## Prerequisites
 LINE account
@@ -18,6 +19,9 @@ Google Cloud account
 
 ## Installation and Setup
 - Clone the repository:
+```
+$ git clone https://github.com/yuzuyuzu0830/Daily-in-Foreign-Language.git
+```
 
 - Navigate into the project directory:
 ```
